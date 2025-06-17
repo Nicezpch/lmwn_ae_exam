@@ -296,7 +296,7 @@ from ae_exam_db.main.order_log_incentive_sessions_driver_incentive_logs ordrlog
 left join ae_exam_db.main.order_transactions OT
 on
 	ordrlog.applied_date = cast(OT.order_datetime as date)
-	and concat('DRV',substring(ordrlog.driver_id,4,3)) = OT.driver_id
+	and concat('DRV',right(ordrlog.driver_id,3)) = concat('DRV',right(OT.driver_id,3))
 group by
 	ordrlog.applied_date
 	,ordrlog.incentive_program
