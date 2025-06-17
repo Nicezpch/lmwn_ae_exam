@@ -96,11 +96,20 @@ order by
  * 6 - Driver ratings before and after complaints. << pending need more information >>
  * ======================================================== */
 
+/* recheck driver_master to make sure all drivers details stored in unique (200 drivers) */
+select count(*), count(distinct driver_id) from ae_exam_db.main.drivers_master;
+
 DROP TABLE IF EXISTS ae_exam_db.main.report_csr_driver_summary;
 
 CREATE TABLE ae_exam_db.main.report_csr_driver_summary AS
 select 
-	TKT_STG.driver_id
+	concat('DRV',right(TKT_STG.driver_id,3)) 																																				as driver_id
+	,DM.join_date
+	,DM.vehicle_type
+	,DM.region
+	,DM.active_status
+	,DM.driver_rating
+	,DM.bonus_tier
 	,count(OT.order_id)																																										as tot_ordr
 	,count(case when TKT_STG.issue_type = 'rider' or TKT_STG.issue_type = 'delivery' then TKT_STG.ticket_id else null end)																	as tot_complaint
 	,CAST(count(case when TKT_STG.issue_type = 'rider' or TKT_STG.issue_type = 'delivery' then TKT_STG.ticket_id else null end)/count(OT.order_id) as DECIMAL(10,2))						as perc_complaint
@@ -123,11 +132,21 @@ from (select
 	,DATEDIFF('hour',opened_datetime,resolved_datetime)																																		as tm_resolved_hr
 from ae_exam_db.main.support_tickets ) TKT_STG
 left join ae_exam_db.main.order_transactions OT
-	on TKT_STG.order_id = OT.order_id
+on 
+	TKT_STG.order_id = OT.order_id
+left join (select distinct * from ae_exam_db.main.drivers_master) DM
+on
+	concat('DRV',right(TKT_STG.driver_id,3)) = concat('DRV',right(DM.driver_id,3))
 group by
-	TKT_STG.driver_id
+	concat('DRV',right(TKT_STG.driver_id,3))
+	,DM.join_date
+	,DM.vehicle_type
+	,DM.region
+	,DM.active_status
+	,DM.driver_rating
+	,DM.bonus_tier
 order by 
-	TKT_STG.driver_id;
+	concat('DRV',right(TKT_STG.driver_id,3));
 
 /* ====================================================================================================================================================================== */
 /* ====================================================================================================================================================================== */
@@ -145,11 +164,20 @@ order by
  * 6 - Impact on repeat purchase behavior from customers after such issues. << pending need more information >>
  * ======================================================== */
 
+/* recheck restaurant_master to make sure all restaurant details stored in unique (105 rest) */
+select count(*), count(distinct restaurant_id) from ae_exam_db.main.restaurants_master;
+
 DROP TABLE IF EXISTS ae_exam_db.main.report_csr_restaurant_summary;
 
 CREATE TABLE ae_exam_db.main.report_csr_restaurant_summary AS
 select 
-	TKT_STG.restaurant_id
+	CONCAT('REST',right(TKT_STG.restaurant_id,3))
+	,RM.name
+	,RM.category
+	,RM.city
+	,RM.average_rating
+	,RM.active_status
+	,RM.prep_time_min
 	,count(OT.order_id)																																										as tot_ordr
 	,count(case when TKT_STG.issue_type = 'food' or TKT_STG.issue_type = 'payment' then TKT_STG.ticket_id else null end)																	as tot_complaint
 	,CAST(count(case when TKT_STG.issue_type = 'food' or TKT_STG.issue_type = 'payment' then TKT_STG.ticket_id else null end)/count(OT.order_id) as DECIMAL(10,2))							as perc_complaint
@@ -172,8 +200,18 @@ from (select
 	,DATEDIFF('hour',opened_datetime,resolved_datetime)																																		as tm_resolved_hr
 from ae_exam_db.main.support_tickets ) TKT_STG
 left join ae_exam_db.main.order_transactions OT
-	on TKT_STG.order_id = OT.order_id
+on 
+	TKT_STG.order_id = OT.order_id
+left join (select distinct * from ae_exam_db.main.restaurants_master) RM
+on
+	CONCAT('REST',right(TKT_STG.restaurant_id,3)) = CONCAT('REST',right(RM.restaurant_id,3))
 group by
-	TKT_STG.restaurant_id
+	CONCAT('REST',right(TKT_STG.restaurant_id,3))
+	,RM.name
+	,RM.category
+	,RM.city
+	,RM.average_rating
+	,RM.active_status
+	,RM.prep_time_min
 order by 
-	TKT_STG.restaurant_id;
+	CONCAT('REST',right(TKT_STG.restaurant_id,3));
